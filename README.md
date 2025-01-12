@@ -5,7 +5,9 @@ The bot automatically times out if the user has not sent a message in 1000s. The
 2. contain links "https://" or "http://"
 
 Commands:
+
 .listen - Bot will begin listening to the specific user in that specific channel where the command was used. User must be muted by self at the time of using the command. 
+
 .stop - Bot will stop listening to the specific user in that specific channel. Only works if the command was used in the channel where .listen was originally used.
 
 Setting Commands:
