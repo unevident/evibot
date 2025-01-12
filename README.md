@@ -9,11 +9,17 @@ Commands:
 .stop - Bot will stop listening to the specific user in that specific channel. Only works if the command was used in the channel where .listen was originally used.
 
 Setting Commands:
+
 (Note: using any of the below commands on their own with no further input will return the current value for that setting)
+
 .changevoicelang - Changes the Voice language used in the voxpopuli voice used to vocalise messages. Requires that the host install MBROLA languages on their system.
+
 .changevoiceid - Changes the Voice ID used in the voxpopuli voice for the currently used language. Requires that the host install MBROLA voices on their system.
+
 .changespeed - Changes the words-per-min speed that the Voice recording is played at. Default: 140(wpm)
+
 .changevolume - Changes the Voice's volume. Maximum: 3
+
 .changepitch - Changes the Voice's pitch. Range: 0-99 inclusive.
 
 Dependencies:
@@ -22,6 +28,7 @@ Dependencies:
 [eSpeak](https://espeak.sourceforge.net/)
 
 [MBROLA](https://github.com/numediart/MBROLA)
+
 Some installation instructions: (https://github.com/espeak-ng/espeak-ng/blob/master/docs/mbrola.md#linux-installation)
 
 [voxpopuli](https://voxpopuli.readthedocs.io/en/latest/install.html) <- There are no Windows/Mac installation instructions for this
