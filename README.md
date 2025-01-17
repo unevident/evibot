@@ -33,4 +33,10 @@ Dependencies:
 
 Some installation instructions: (https://github.com/espeak-ng/espeak-ng/blob/master/docs/mbrola.md#linux-installation)
 
-[voxpopuli](https://voxpopuli.readthedocs.io/en/latest/install.html) <- There are no Windows/Mac installation instructions for this
+[voxpopuli](https://voxpopuli.readthedocs.io/en/latest/install.html) <- There are no Windows/Mac installation instructions for this. I have no experience installing this outside of Linux
+
+[dotenv](https://pypi.org/project/python-dotenv/)
+
+[PyNaCl](https://pypi.org/project/PyNaCl/)
+
+Note: If you pull this repo, you must create a .env file in the directory and put the "DISCORD_TOKEN=YOUR_DISCORD_BOT_TOKEN_HERE" for your bot to log into discord
