@@ -42,7 +42,7 @@ async def listen(ctx:commands.Context):
     global currentlyPlaying
     """Starts listening for messages from the command invoker in the channel where the command was invoked. If invoker is muted in voice chat and sends non-link messages below 300 characters, 
     the bot will send a TTS message with that content. If no messages are sent by the member in 1000s, or the user sends ?stop, the bot stops listening."""
-    if currentlyListening or currentListener != None:
+    if currentlyListening or currentListener != None and currentListener != ctx.author:
         return await ctx.send(f'Sorry, the bot is currently listening to {currentListener}')
     if ctx.author.voice == None:
         return await ctx.send('You must be in a voice channel to use this command.')
@@ -54,7 +54,7 @@ async def listen(ctx:commands.Context):
     currentListener = ctx.author
     # The check logic for message (must be legal message, in correct channel, from correct user, < 300 characters, does not contain link)
     def check(message: discord.Message):
-        return message.content is not None and message.channel == ctx.channel and message.author == ctx.author and len(message.content) < 300 and not message.content.__contains__("https://") or message.content.__contains__("http://")
+        return message.content is not None and message.channel == ctx.channel and message.author == currentListener and message.author == ctx.author and len(message.content) < 300 and not (message.content.__contains__("https://") or message.content.__contains__("http://"))
     
     global voiceChannel
     voiceChannel = await ctx.author.voice.channel.connect()
@@ -123,7 +123,7 @@ async def stop(ctx:commands.Context):
     global currentlyPlaying
     global voiceChannel
     message = ctx.message
-    if message.author == currentListener and voiceChannel != None and currentlyListening or currentlyPlaying:
+    if message.author == currentListener and voiceChannel != None and (currentlyListening or currentlyPlaying):
         await ctx.send(f"Stopped listening for messages from {message.author}")
         currentListener = None
         currentlyListening = False
@@ -255,5 +255,14 @@ async def changevolume(ctx:commands.Context):
     
     except ValueError as e:
         return await ctx.send(f"Value entered is not a valid input. {e}")
+    
+@bot.command()
+async def debuginfo(ctx:commands.Context):
+    """Debug information about the bot for bug-fixing."""
+    global currentListener
+    global currentlyListening
+    global currentlyPlaying
+    global voiceChannel
+    return await ctx.send(f"Current Listener: {currentListener} \nCurrently Listening? {currentlyListening} \nCurrently Playing? {currentlyPlaying} \nVoice Channel: {voiceChannel}")
 
 bot.run(TOKEN)
