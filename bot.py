@@ -54,7 +54,7 @@ async def listen(ctx:commands.Context):
     currentListener = ctx.author
     # The check logic for message (must be legal message, in correct channel, from correct user, < 300 characters, does not contain link)
     def check(message: discord.Message):
-        return message.content is not None and message.channel == ctx.channel and message.author == currentListener and message.author == ctx.author and len(message.content) < 300 and not (message.content.__contains__("https://") or message.content.__contains__("http://"))
+        return message.content is not None and message.channel == ctx.channel and message.author == currentListener and message.author == ctx.author and len(message.content) < 300 and not (message.content.__contains__("https://") or message.content.__contains__("http://") or message.content.startswith("."))
     
     global voiceChannel
     voiceChannel = await ctx.author.voice.channel.connect()
