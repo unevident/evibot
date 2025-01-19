@@ -3,6 +3,7 @@ A discord bot that starts listening for messages from a specific user in a speci
 The bot automatically times out if the user has not sent a message in 1000s. The bot will also not vocalise messages if they:
 1. are more than 300 characters long (for sanity of other users in the voice channel)
 2. contain links "https://" or "http://"
+3. start with '.'
 
 Commands:
 
@@ -25,18 +26,18 @@ Setting Commands:
 .changepitch - Changes the Voice's pitch. Range: 0-99 inclusive.
 
 Dependencies:
-[discord.py](https://discordpy.readthedocs.io/en/stable/intro.html#installing)
 
-[eSpeak](https://espeak.sourceforge.net/)
+[eSpeak](https://espeak.sourceforge.net/) <- must be apt installed on your system with ```sudo apt-get install espeak```
 
-[MBROLA](https://github.com/numediart/MBROLA)
+[MBROLA](https://github.com/numediart/MBROLA) <- must also be apt installed on system with ```sudo apt-get install mbrola```
 
-Some installation instructions: (https://github.com/espeak-ng/espeak-ng/blob/master/docs/mbrola.md#linux-installation)
+Note: MBROLA voices are not included. Please install them with apt. Recommended voices: mbrola-us2 mbrola-us3
+Some installation instructions: (https://github.com/espeak-ng/espeak-ng/blob/master/docs/mbrola.md#linux-installation) 
 
 [voxpopuli](https://voxpopuli.readthedocs.io/en/latest/install.html) <- There are no Windows/Mac installation instructions for this. I have no experience installing this outside of Linux
 
-[dotenv](https://pypi.org/project/python-dotenv/)
+[ffmpeg](https://phoenixnap.com/kb/install-ffmpeg-ubuntu)
 
-[PyNaCl](https://pypi.org/project/PyNaCl/)
+The other python library dependencies are in the requirements.txt
 
 Note: If you pull this repo, you must create a .env file in the directory and put the "DISCORD_TOKEN=YOUR_DISCORD_BOT_TOKEN_HERE" for your bot to log into discord

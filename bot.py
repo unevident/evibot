@@ -52,9 +52,14 @@ async def listen(ctx:commands.Context):
 
     currentlyListening = True
     currentListener = ctx.author
-    # The check logic for message (must be legal message, in correct channel, from correct user, < 300 characters, does not contain link)
+    # The check logic for message (must be legal message, in correct channel, from correct user, < 300 characters, does not contain link, does not start with "-")
     def check(message: discord.Message):
-        return message.content is not None and message.channel == ctx.channel and message.author == currentListener and message.author == ctx.author and len(message.content) < 300 and not (message.content.__contains__("https://") or message.content.__contains__("http://") or message.content.startswith("."))
+        return message.content is not None \
+            and message.channel == ctx.channel \
+            and message.author == currentListener \
+            and message.author == ctx.author \
+            and len(message.content) < 300 \
+            and not (message.content.__contains__("https://") or message.content.__contains__("http://") or message.content.startswith(".") or  "-" in message.content)
     
     global voiceChannel
     voiceChannel = await ctx.author.voice.channel.connect()
@@ -63,8 +68,14 @@ async def listen(ctx:commands.Context):
     def setCurrentlyPlayingFalse():
         global currentlyPlaying
         currentlyPlaying = False
+    
+    global voice
+    twav = voice.to_audio("Ready to listen")
+    twavFileLike = BytesIO(twav)
 
-    voiceChannel.play(discord.FFmpegPCMAudio("test.wav"), after=lambda f: setCurrentlyPlayingFalse())
+    currentlyPlaying = True
+
+    voiceChannel.play(discord.FFmpegPCMAudio(twavFileLike, pipe=True), after=lambda f: setCurrentlyPlayingFalse())
 
     # When valid message is received, if bot is listening, try to TTS
     while currentlyListening:
@@ -74,16 +85,9 @@ async def listen(ctx:commands.Context):
                 return await ctx.send("Error: User not detected in voice channel")
             
             message = await bot.wait_for('message', check=check, timeout=1000)
-
-            # if message.content == ".stop":
-            #     await ctx.send("Stopped listening for messages.")
-            #     currentlyListening = False
-            #     currentListener = None
-            #     await voiceChannel.disconnect()
                 
             # If bot is currently playing an audio file, don't interrupt with another audio file
             if not currentlyPlaying:
-                global voice
                 wav = voice.to_audio(message.content)
                 wavFileLike = BytesIO(wav)
 
