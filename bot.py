@@ -41,7 +41,7 @@ async def listen(ctx:commands.Context):
     global currentlyListening
     global currentlyPlaying
     """Starts listening for messages from the command invoker in the channel where the command was invoked. If invoker is muted in voice chat and sends non-link messages below 300 characters, 
-    the bot will send a TTS message with that content. If no messages are sent by the member in 1000s, or the user sends ?stop, the bot stops listening."""
+    the bot will send a TTS message with that content. If no messages are sent by the member in 1000s, or the user sends .stop, the bot stops listening."""
     if currentlyListening or currentListener != None and currentListener != ctx.author:
         return await ctx.send(f'Sorry, the bot is currently listening to {currentListener}')
     if ctx.author.voice == None:
@@ -71,9 +71,13 @@ async def listen(ctx:commands.Context):
     
     global voice
     twav = voice.to_audio("Ready to listen")
-    twavFileLike = BytesIO(twav)
+    with open("help.wav", mode="wb") as test: 
+        test.write(twav);
 
+    twavFileLike = BytesIO(twav)
     currentlyPlaying = True
+
+    print(twavFileLike.getvalue)
 
     voiceChannel.play(discord.FFmpegPCMAudio(twavFileLike, pipe=True), after=lambda f: setCurrentlyPlayingFalse())
 
@@ -104,12 +108,14 @@ async def listen(ctx:commands.Context):
                 await ctx.send('Sorry, too many messages are being sent. Please wait until I have finished vocalizing my previous sentence.')
 
         except asyncio.TimeoutError as time:
-            await ctx.send(f"Listening command timed out. {time}")
-            currentlyListening = False
-            currentListener = None
-            currentlyPlaying = False
-            await voiceChannel.disconnect()
-            voiceChannel = None
+            
+            if (currentlyListening or (voiceChannel != None)):
+                currentlyListening = False
+                currentListener = None
+                currentlyPlaying = False
+                await ctx.send(f"Listening command timed out. {time}")
+                await voiceChannel.disconnect()
+                voiceChannel = None
 
         except Exception as e:
             await ctx.send(f"Listen command stopped. Error: {e}")
