@@ -143,6 +143,7 @@ async def stop(ctx:commands.Context):
     message = ctx.message
     if message.author == currentListener and voiceChannel != None and (currentlyListening or currentlyPlaying):
         await ctx.send(f"Stopped listening for messages from {message.author}")
+        await ctx.send("https://tenor.com/view/voice-little-mermaid-the-little-mermaid-stealing-your-voice-stealing-voice-gif-3727432")
         currentListener = None
         currentlyListening = False
         currentlyPlaying = False
