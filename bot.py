@@ -122,6 +122,7 @@ async def listen(ctx:commands.Context):
                 currentListener = None
                 currentlyPlaying = False
                 await ctx.send(f"Listening command timed out. {time}")
+                await ctx.send("https://tenor.com/view/voice-little-mermaid-the-little-mermaid-stealing-your-voice-stealing-voice-gif-3727432")
                 await voiceChannel.disconnect()
                 voiceChannel = None
 
