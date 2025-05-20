@@ -1,5 +1,6 @@
 import os
 import asyncio
+import re
 from io import BytesIO
 
 import discord
@@ -92,7 +93,14 @@ async def listen(ctx:commands.Context):
                 
             # If bot is currently playing an audio file, don't interrupt with another audio file
             if not currentlyPlaying:
-                wav = voice.to_audio(message.content)
+                content = message.content
+                searchEmote = re.search(r"(:\w+:)(\d+)", message.content)
+                while searchEmote != None:
+                    searchEmote = re.search(r"(:\w+:)(\d+)", content)
+                    if searchEmote != None:
+                        content = content[0:searchEmote.span()[0]] + searchEmote.group(1) + content[searchEmote.span()[1]:]
+
+                wav = voice.to_audio(content)
                 wavFileLike = BytesIO(wav)
 
                 currentlyPlaying = True
