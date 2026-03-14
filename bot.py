@@ -320,11 +320,13 @@ async def yt(ctx:commands.Context):
             except Exception as e:
                 print(e)
                 await ctx.send("Unable to join voice channel from another channel. Please contact the bot owner")
-    try:
-        voiceChannel = await ctx.author.voice.channel.connect()
-    except Exception as e:
-        print(e)
-        await ctx.send("Unable to join voice channel. Please contact the bot owner")
+    
+    if voiceChannel == None:
+        try:
+            voiceChannel = await ctx.author.voice.channel.connect()
+        except Exception as e:
+            print(e)
+            await ctx.send("Unable to join voice channel. Please contact the bot owner")
     
     try:
         message = ctx.message.content
@@ -415,6 +417,32 @@ async def ytstop(ctx:commands.context):
     except Exception as e:
         print(e)
         return await ctx.send("Encountered an issue while trying to stop. Check bot logs.")
+    
+@bot.command()
+async def disconnect(ctx:commands.context):
+    global currentlyPlaying
+    global currentlyListening
+    global currentlyPaused
+    global voiceChannel
+
+    if not voiceChannel:
+        return await ctx.send("Bot is not in a voice channel.")
+    if currentlyPlaying:
+        currentlyPlaying = False
+        try:
+            voiceChannel.stop()
+        except Exception as e:
+            print(e)
+            return await ctx.send("Bot is detected as currently playing but encountered an error while stopping playing")
+    try:
+        await voiceChannel.disconnect()
+        voiceChannel = None
+        currentlyListening = False
+        currentlyPaused = False
+        currentlyPlaying = False
+
+
+
 
 
 bot.run(TOKEN)
