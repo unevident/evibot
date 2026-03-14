@@ -318,7 +318,12 @@ async def yt(ctx:commands.Context):
                 voiceChannel = await ctx.author.voice.channel.connect()
             except Exception as e:
                 print(e)
-                await ctx.send("Unable to join channel. Please contact the bot owner")
+                await ctx.send("Unable to join voice channel from another channel. Please contact the bot owner")
+    try:
+        voiceChannel = await ctx.author.voice.channel.connect()
+    except Exception as e:
+        print(e)
+        await ctx.send("Unable to join voice channel. Please contact the bot owner")
     
     try:
         message = ctx.message.content
