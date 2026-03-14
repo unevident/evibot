@@ -304,10 +304,15 @@ async def yt(ctx:commands.Context):
 
     if currentlyPlaying:
         return await ctx.send(f"Sorry, I am currently playing something else.")
-    if ctx.author.voice.channel == None:
-        return await ctx.send(f"Unable to locate voice channel. Please use this command only while in a voice channel.")
+    
+    try:
+        if ctx.author.voice.channel == None:
+            return await ctx.send(f"Unable to locate voice channel. Please use this command only while in a voice channel.")
+    except Exception as e:
+        print(e)
+        return await ctx.send("Unable to locate voice channel. Please use this command only while in a voice channel.")
         
-    if ctx.author.voice.channel != voiceChannel:
+    if ctx.author.voice.channel != voiceChannel.channel:
         try:
             voiceChannel = await ctx.author.voice.channel.connect()
         except Exception as e:
@@ -322,7 +327,8 @@ async def yt(ctx:commands.Context):
         return await ctx.send("Unable to parse url sent with the .yt command.")
 
     if url[12:19] != "youtube":
-        return await ctx.send("Unable to recognize url as valid youtube link.")
+        if url[8:16] != "youtu.be":
+            return await ctx.send("Unable to recognize url as valid youtube link.")
 
     try:
         data = ytdl.extract_info(url, download=False)
@@ -337,7 +343,7 @@ async def yt(ctx:commands.Context):
         voiceChannel.play(player, after=lambda f: setCurrentlyPlayingFalse())
     except Exception as e:
         print(e)
-        return await ctx.send("Unable to play ffmpeg file for some reason. Look at bot commandline output")
+        return await ctx.send("Unable to play ffmpeg file for some reason. Look at bot log output")
 
 
 bot.run(TOKEN)
