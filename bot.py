@@ -325,7 +325,7 @@ async def yt(ctx:commands.Context):
         return await ctx.send("Unable to recognize url as valid youtube link.")
 
     try:
-        data = await ytdl.extract_info(url, download=False)
+        data = ytdl.extract_info(url, download=False)
         song = data['url']
     except Exception as e:
         print(e)
