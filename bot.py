@@ -354,6 +354,7 @@ async def yt(ctx:commands.Context):
     
 @bot.command()
 async def ytpause(ctx:commands.context):
+    """Pauses the bot if it is currently playing."""
     global currentlyPlaying
     global currentlyPaused
     global voiceChannel
@@ -368,12 +369,14 @@ async def ytpause(ctx:commands.context):
     currentlyPlaying = False
     try:
         voiceChannel.pause()
+        return await ctx.send("Paused the currently playing song.")
     except Exception as e:
         print(e)
         return await ctx.send("Encountered an issue while trying to pause. Check bot logs.")
     
 @bot.command()
 async def ytresume(ctx:commands.context):
+    """Resumes the bot if it is currently paused."""
     global currentlyPlaying
     global currentlyPaused
     global voiceChannel
@@ -388,12 +391,14 @@ async def ytresume(ctx:commands.context):
     currentlyPlaying = True
     try:
         voiceChannel.resume()
+        return await ctx.send("Resumed the currently playing song.")
     except Exception as e:
         print(e)
         return await ctx.send("Encountered an issue while trying to resume. Check bot logs.")
     
 @bot.command()
 async def ytstop(ctx:commands.context):
+    """Stops the bot if it is currently playing."""
     global currentlyPlaying
     global currentlyPaused
     global voiceChannel
@@ -406,6 +411,7 @@ async def ytstop(ctx:commands.context):
     currentlyPlaying = False
     try:
         voiceChannel.stop()
+        return await ctx.send("Stopped the currently playing song.")
     except Exception as e:
         print(e)
         return await ctx.send("Encountered an issue while trying to stop. Check bot logs.")
