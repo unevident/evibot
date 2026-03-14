@@ -2,6 +2,7 @@ import os
 import asyncio
 import re
 from io import BytesIO
+import yt_dlp
 
 import discord
 from discord.ext import commands
@@ -19,6 +20,12 @@ currentListener = None
 currentlyListening = False
 currentlyPlaying = False
 voiceChannel = None
+
+yt_dl_options = {"format": "bestaudio/best"}
+
+ytdl = yt_dlp.YoutubeDL(yt_dl_options)
+
+ffmpeg_options = {'options': '-vn'}
 
 voice = Voice(lang="us", speed=140, voice_id=2)
 
@@ -284,5 +291,53 @@ async def debuginfo(ctx:commands.Context):
     global currentlyPlaying
     global voiceChannel
     return await ctx.send(f"Current Listener: {currentListener} \nCurrently Listening? {currentlyListening} \nCurrently Playing? {currentlyPlaying} \nVoice Channel: {voiceChannel}")
+
+@bot.command()
+async def yt(ctx:commands.Context):
+    """Tries to play the given url. Format: '.yt https://www.youtube.com/abcdef'"""
+    global currentlyPlaying
+    global voiceChannel
+
+    def setCurrentlyPlayingFalse():
+        global currentlyPlaying
+        currentlyPlaying = False
+
+    if currentlyPlaying:
+        return await ctx.send(f"Sorry, I am currently playing something else.")
+    if ctx.author.voice.channel == None:
+        return await ctx.send(f"Unable to locate voice channel. Please use this command only while in a voice channel.")
+        
+    if ctx.author.voice.channel != voiceChannel:
+        try:
+            voiceChannel = await ctx.author.voice.channel.connect()
+        except Exception as e:
+            print(e)
+            await ctx.send("Unable to join channel. Please contact the bot owner")
+    
+    try:
+        message = ctx.message.content
+        url = message.split()[1]
+    except Exception as e:
+        print(e)
+        return await ctx.send("Unable to parse url sent with the .yt command.")
+
+    if url[12:19] != "youtube":
+        return await ctx.send("Unable to recognize url as valid youtube link.")
+
+    try:
+        data = await ytdl.extract_info(url, download=False)
+        song = data['url']
+    except Exception as e:
+        print(e)
+        return await ctx.send("Failed to obtain valid JSON response from ytdl query")
+
+    try:
+        currentlyPlaying = True
+        player = discord.FFmpegPCMAudio(song, **ffmpeg_options)
+        voiceChannel.play(player, after=lambda f: setCurrentlyPlayingFalse())
+    except Exception as e:
+        print(e)
+        return await ctx.send("Unable to play ffmpeg file for some reason. Look at bot commandline output")
+
 
 bot.run(TOKEN)
