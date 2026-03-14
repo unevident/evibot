@@ -441,6 +441,9 @@ async def disconnect(ctx:commands.context):
         currentlyListening = False
         currentlyPaused = False
         currentlyPlaying = False
+    except Exception as e:
+        print(e)
+        return await ctx.send("Bot was unable to disconnect properly for some reason. Check bot logs.")
 
 
 
