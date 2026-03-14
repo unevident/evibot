@@ -20,6 +20,7 @@ currentListener = None
 currentlyListening = False
 currentlyPlaying = False
 voiceChannel = None
+currentlyPaused = False
 
 yt_dl_options = {"format": "bestaudio/best"}
 
@@ -350,6 +351,64 @@ async def yt(ctx:commands.Context):
     except Exception as e:
         print(e)
         return await ctx.send("Unable to play ffmpeg file for some reason. Look at bot log output")
+    
+@bot.command()
+async def ytpause(ctx:commands.context):
+    global currentlyPlaying
+    global currentlyPaused
+    global voiceChannel
+
+    if not voiceChannel:
+        return await ctx.send("Bot is not in a voice channel.")
+    if not currentlyPlaying:
+        return await ctx.send("Unable to pause as there is nothing playing.")
+    if currentlyPaused:
+        return await ctx.send("Already paused.")
+    currentlyPaused = True
+    currentlyPlaying = False
+    try:
+        voiceChannel.pause()
+    except Exception as e:
+        print(e)
+        return await ctx.send("Encountered an issue while trying to pause. Check bot logs.")
+    
+@bot.command()
+async def ytresume(ctx:commands.context):
+    global currentlyPlaying
+    global currentlyPaused
+    global voiceChannel
+
+    if not voiceChannel:
+        return await ctx.send("Bot is not in a voice channel.")
+    if currentlyPlaying:
+        return await ctx.send("Unable to resume as bot is already playing.")
+    if not currentlyPaused:
+        return await ctx.send("Already resumed.")
+    currentlyPaused = False
+    currentlyPlaying = True
+    try:
+        voiceChannel.resume()
+    except Exception as e:
+        print(e)
+        return await ctx.send("Encountered an issue while trying to resume. Check bot logs.")
+    
+@bot.command()
+async def ytstop(ctx:commands.context):
+    global currentlyPlaying
+    global currentlyPaused
+    global voiceChannel
+    
+    if not voiceChannel:
+        return await ctx.send("Bot is not in a voice channel.")
+    if not currentlyPlaying:
+        return await ctx.send("Bot is not playing anything.")
+    currentlyPaused = False
+    currentlyPlaying = False
+    try:
+        voiceChannel.stop()
+    except Exception as e:
+        print(e)
+        return await ctx.send("Encountered an issue while trying to stop. Check bot logs.")
 
 
 bot.run(TOKEN)
