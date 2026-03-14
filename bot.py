@@ -342,6 +342,7 @@ async def yt(ctx:commands.Context):
     try:
         data = ytdl.extract_info(url, download=False)
         song = data['url']
+        await ctx.send("Now playing: " + data["title"])
     except Exception as e:
         print(e)
         return await ctx.send("Failed to obtain valid JSON response from ytdl query")
