@@ -320,16 +320,18 @@ async def yt(ctx:commands.Context):
         global currentlyPlaying
         currentlyPlaying = False
     
-    async def afterPlay():
+    def afterPlay():
         setCurrentlyPlayingFalse()
         if len(urlQueue) > 0:
             try:
+                global currentlyPlaying
                 nextSong = urlQueue.popleft()
                 newPlayer = discord.FFmpegPCMAudio(nextSong["url"], **ffmpeg_options)
-                await ctx.send(f"Now playing: {nextSong['title']}")
+                ctx.send(f"Now playing: {nextSong['title']}")
+                currentlyPlaying = True
                 voiceChannel.play(newPlayer, after=lambda f: afterPlay())
             except Exception as e:
-                return await ctx.send(f"Error while popping from url queue to continue. {e}")
+                return ctx.send(f"Error while popping from url queue to continue. {e}")
 
     if currentlyPlaying:
         try:
