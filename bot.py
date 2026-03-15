@@ -319,6 +319,17 @@ async def yt(ctx:commands.Context):
     def setCurrentlyPlayingFalse():
         global currentlyPlaying
         currentlyPlaying = False
+    
+    async def afterPlay():
+        setCurrentlyPlayingFalse()
+        if len(urlQueue) > 0:
+            try:
+                nextSong = urlQueue.popleft()
+                newPlayer = discord.FFmpegPCMAudio(nextSong["url"], **ffmpeg_options)
+                await ctx.send(f"Now playing: {nextSong['title']}")
+                voiceChannel.play(newPlayer, after=lambda f: afterPlay())
+            except Exception as e:
+                return await ctx.send(f"Error while popping from url queue to continue. {e}")
 
     if currentlyPlaying:
         try:
@@ -378,15 +389,15 @@ async def yt(ctx:commands.Context):
     try:
         currentlyPlaying = True
         player = discord.FFmpegPCMAudio(song, **ffmpeg_options)
-        await voiceChannel.play(player, after=lambda f: setCurrentlyPlayingFalse())
-        while len(urlQueue) > 0:
-            try:
-                nextSong = urlQueue.popleft()
-                newPlayer = discord.FFmpegPCMAudio(nextSong["url"], **ffmpeg_options)
-                await ctx.send(f"Now playing: {nextSong['title']}")
-                await voiceChannel.play(newPlayer, after=lambda f: setCurrentlyPlayingFalse())
-            except Exception as e:
-                return await ctx.send(f"Error while popping from url queue to continue. {e}")
+        await voiceChannel.play(player, after=lambda f: afterPlay())
+        # while len(urlQueue) > 0:
+        #     try:
+        #         nextSong = urlQueue.popleft()
+        #         newPlayer = discord.FFmpegPCMAudio(nextSong["url"], **ffmpeg_options)
+        #         await ctx.send(f"Now playing: {nextSong['title']}")
+        #         await voiceChannel.play(newPlayer, after=lambda f: setCurrentlyPlayingFalse())
+        #     except Exception as e:
+        #         return await ctx.send(f"Error while popping from url queue to continue. {e}")
     except Exception as e:
         return await ctx.send(f"Unable to play ffmpeg file. {e}")
     
