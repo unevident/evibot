@@ -389,7 +389,7 @@ async def yt(ctx:commands.Context):
     try:
         currentlyPlaying = True
         player = discord.FFmpegPCMAudio(song, **ffmpeg_options)
-        await voiceChannel.play(player, after=lambda f: (await afterPlay() for _ in '_').__anext__())
+        voiceChannel.play(player, after=lambda f: (await afterPlay() for _ in '_').__anext__())
         # while len(urlQueue) > 0:
         #     try:
         #         nextSong = urlQueue.popleft()
