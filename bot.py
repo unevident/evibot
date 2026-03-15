@@ -380,7 +380,7 @@ async def yt(ctx:commands.Context):
         voiceChannel.play(player, after=lambda f: setCurrentlyPlayingFalse())
         if len(urlQueue) > 0:
             try:
-                yt(urlQueue.popleft())
+                await yt(urlQueue.popleft())
             except Exception as e:
                 return await ctx.send(f"Error while popping from url queue to continue. {e}")
     except Exception as e:
@@ -482,7 +482,7 @@ async def queue(ctx:commands.context):
         message += "None"
         return await ctx.send(message)
     for url in urlQueue:
-        message = message + "\n" + url['title']
+        message = message + "\n" + url
     return await ctx.send(message)
 
 
