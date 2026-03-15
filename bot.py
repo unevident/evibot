@@ -1,14 +1,13 @@
-import os
 import asyncio
+from collections import deque
 import re
 from io import BytesIO
-import yt_dlp
-
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-
+import os
 from voxpopuli import Voice
+import yt_dlp
 
 
 description = '''Example bot'''
@@ -16,11 +15,13 @@ description = '''Example bot'''
 intents = discord.Intents.default()
 intents.message_content = True
 
+currentlyConnected = False
 currentListener = None
 currentlyListening = False
 currentlyPlaying = False
 voiceChannel = None
 currentlyPaused = False
+urlQueue = deque()
 
 yt_dl_options = {"format": "bestaudio/best"}
 
@@ -34,6 +35,21 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
 bot = commands.Bot(command_prefix = '.', description=description, intents=intents)
+
+def syncVoiceChannelState():
+    global currentlyPlaying
+    global currentlyPaused
+    global currentlyConnected
+    global voiceChannel
+    if voiceChannel is not None:
+        currentlyPlaying = voiceChannel.is_playing
+        currentlyPaused = voiceChannel.is_paused
+        currentlyConnected = voiceChannel.is_connected
+    else:
+        currentlyPlaying = False
+        currentlyPaused = False
+        currentlyConnected = False
+
 
 @bot.event
 async def on_ready():
@@ -74,9 +90,9 @@ async def listen(ctx:commands.Context):
     voiceChannel = await ctx.author.voice.channel.connect()
     currentlyPlaying = True
     # Defined in listen function. Sets currentlyPlaying to false after playing join message.
-    def setCurrentlyPlayingFalse():
-        global currentlyPlaying
-        currentlyPlaying = False
+    # def setCurrentlyPlayingFalse():
+    #     global currentlyPlaying
+    #     currentlyPlaying = False
     
     global voice
     twav = voice.to_audio("Ready to listen")
@@ -88,7 +104,7 @@ async def listen(ctx:commands.Context):
 
     print(twavFileLike.getvalue)
 
-    voiceChannel.play(discord.FFmpegPCMAudio(twavFileLike, pipe=True), after=lambda f: setCurrentlyPlayingFalse())
+    voiceChannel.play(discord.FFmpegPCMAudio(twavFileLike, pipe=True), after=lambda f: syncVoiceChannelState())
 
     # When valid message is received, if bot is listening, try to TTS
     while currentlyListening:
@@ -115,7 +131,7 @@ async def listen(ctx:commands.Context):
                 # finishPlay sets the currentlyPLaying variable to false to accept more messages. Also closes the wav file-like stream.
                 def finishPlay():   
                     global currentlyPlaying
-                    currentlyPlaying = False
+                    currentlyPlaying = voiceChannel.is_playing
                     wavFileLike.close()
 
                 voiceChannel.play(discord.FFmpegPCMAudio(wavFileLike, pipe=True), after=lambda e: finishPlay())
@@ -298,20 +314,28 @@ async def yt(ctx:commands.Context):
     """Tries to play the given url. Format: '.yt https://www.youtube.com/abcdef'"""
     global currentlyPlaying
     global voiceChannel
+    global urlQueue
 
     def setCurrentlyPlayingFalse():
         global currentlyPlaying
         currentlyPlaying = False
 
     if currentlyPlaying:
-        return await ctx.send(f"Sorry, I am currently playing something else.")
+        try:
+            url = ctx.message.content.split()[1]
+            if url[12:19] != "youtube":
+                if url[8:16] != "youtu.be":
+                    return await ctx.send(f"Unable to recognize url as valid youtube link. {e}")
+            urlQueue.append(url)
+            return await ctx.send(f"Adding song to queue.")
+        except Exception as e:
+            return await ctx.send(f"Unable to parse song url.")
     
     try:
         if ctx.author.voice.channel == None:
             return await ctx.send(f"Unable to locate voice channel. Please use this command only while in a voice channel.")
     except Exception as e:
-        print(e)
-        return await ctx.send("Unable to locate voice channel. Please use this command only while in a voice channel.")
+        return await ctx.send(f"Unable to locate voice channel. Please use this command only while in a voice channel. {e}")
 
     if voiceChannel != None:    
         if ctx.author.voice.channel != voiceChannel.channel:
@@ -319,25 +343,26 @@ async def yt(ctx:commands.Context):
                 voiceChannel = await ctx.author.voice.channel.connect()
             except Exception as e:
                 print(e)
-                await ctx.send("Unable to join voice channel from another channel. Please contact the bot owner")
+                await ctx.send(f"Unable to join voice channel from another channel. Please contact the bot owner. Error: {e}")
     
     if voiceChannel == None:
         try:
             voiceChannel = await ctx.author.voice.channel.connect()
+            syncVoiceChannelState()
         except Exception as e:
             print(e)
-            await ctx.send("Unable to join voice channel. Please contact the bot owner")
+            await ctx.send(f"Unable to join voice channel. Please contact the bot owner. {e}")
     
     try:
         message = ctx.message.content
         url = message.split()[1]
     except Exception as e:
         print(e)
-        return await ctx.send("Unable to parse url sent with the .yt command.")
+        return await ctx.send(f"Unable to parse song url. {e}")
 
     if url[12:19] != "youtube":
         if url[8:16] != "youtu.be":
-            return await ctx.send("Unable to recognize url as valid youtube link.")
+            return await ctx.send(f"Unable to recognize url as valid youtube link. {e}")
 
     try:
         data = ytdl.extract_info(url, download=False)
@@ -345,15 +370,19 @@ async def yt(ctx:commands.Context):
         await ctx.send("Now playing: " + data["title"])
     except Exception as e:
         print(e)
-        return await ctx.send("Failed to obtain valid JSON response from ytdl query")
+        return await ctx.send(f"Failed to obtain valid JSON response from ytdl query. {e}")
 
     try:
         currentlyPlaying = True
         player = discord.FFmpegPCMAudio(song, **ffmpeg_options)
         voiceChannel.play(player, after=lambda f: setCurrentlyPlayingFalse())
+        if len(urlQueue) > 0:
+            try:
+                yt(urlQueue.popleft())
+            except Exception as e:
+                return await ctx.send(f"Error while popping from url queue to continue. {e}")
     except Exception as e:
-        print(e)
-        return await ctx.send("Unable to play ffmpeg file for some reason. Look at bot log output")
+        return await ctx.send(f"Unable to play ffmpeg file. {e}")
     
 @bot.command()
 async def ytpause(ctx:commands.context):
@@ -368,14 +397,12 @@ async def ytpause(ctx:commands.context):
         return await ctx.send("Unable to pause as there is nothing playing.")
     if currentlyPaused:
         return await ctx.send("Already paused.")
-    currentlyPaused = True
-    currentlyPlaying = False
     try:
         voiceChannel.pause()
+        syncVoiceChannelState()
         return await ctx.send("Paused the currently playing song.")
     except Exception as e:
-        print(e)
-        return await ctx.send("Encountered an issue while trying to pause. Check bot logs.")
+        return await ctx.send(f"Encountered an issue while trying to pause. {e}")
     
 @bot.command()
 async def ytresume(ctx:commands.context):
@@ -394,10 +421,10 @@ async def ytresume(ctx:commands.context):
     currentlyPlaying = True
     try:
         voiceChannel.resume()
+        syncVoiceChannelState()
         return await ctx.send("Resumed the currently playing song.")
     except Exception as e:
-        print(e)
-        return await ctx.send("Encountered an issue while trying to resume. Check bot logs.")
+        return await ctx.send(f"Encountered an issue while trying to resume. {e}")
     
 @bot.command()
 async def ytstop(ctx:commands.context):
@@ -410,10 +437,9 @@ async def ytstop(ctx:commands.context):
         return await ctx.send("Bot is not in a voice channel.")
     if not currentlyPlaying:
         return await ctx.send("Bot is not playing anything.")
-    currentlyPaused = False
-    currentlyPlaying = False
     try:
         voiceChannel.stop()
+        syncVoiceChannelState()
         return await ctx.send("Stopped the currently playing song.")
     except Exception as e:
         print(e)
@@ -425,6 +451,7 @@ async def disconnect(ctx:commands.context):
     global currentlyListening
     global currentlyPaused
     global voiceChannel
+    global urlQueue
 
     if not voiceChannel:
         return await ctx.send("Bot is not in a voice channel.")
@@ -432,21 +459,47 @@ async def disconnect(ctx:commands.context):
         currentlyPlaying = False
         try:
             voiceChannel.stop()
+            syncVoiceChannelState()
         except Exception as e:
-            print(e)
-            return await ctx.send("Bot is detected as currently playing but encountered an error while stopping playing")
+            return await ctx.send(f"Bot is detected as currently playing but encountered an error while stopping playing. {e}")
     try:
         await voiceChannel.disconnect()
         voiceChannel = None
         currentlyListening = False
         currentlyPaused = False
         currentlyPlaying = False
+        urlQueue = deque()
     except Exception as e:
-        print(e)
-        return await ctx.send("Bot was unable to disconnect properly for some reason. Check bot logs.")
+        return await ctx.send(f"Bot was unable to disconnect properly for some reason. {e}")
+
+@bot.command()
+async def queue(ctx:commands.context):
+    global urlQueue
+    count = len(urlQueue)
+    message = "Queue: "
+    if count == 0:
+        message += "None"
+        return await ctx.send(message)
+    for url in urlQueue:
+        message = message + "\n" + url['title']
+    return await ctx.send(message)
 
 
-
-
+@bot.command()
+async def ytskip(ctx:commands.context):
+    global urlQueue
+    global currentlyPlaying
+    global voiceChannel
+    
+    if voiceChannel is None:
+        return await ctx.send("Bot is not in a voice channel.")
+    if not voiceChannel.is_playing:
+        return await ctx.send("Bot is not playing anything.")
+    voiceChannel.stop()
+    if len(urlQueue) > 0:
+        try:
+            yt(urlQueue.popleft())
+        except Exception as e:
+            return await ctx.send(f"Failed to play next song. {e}")
 
 bot.run(TOKEN)
