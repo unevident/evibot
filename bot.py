@@ -328,7 +328,8 @@ async def yt(ctx:commands.Context):
                     return await ctx.send(f"Unable to recognize url as valid youtube link. {e}")
             
             data = ytdl.extract_info(url, download=False)
-            urlQueue.append(data["url"])
+            newSong = {"url": data["url"], "title": data["title"]}
+            urlQueue.append(newSong)
             return await ctx.send(f"Adding song to queue.")
         except Exception as e:
             return await ctx.send(f"Unable to parse song url or ytdl error. {e}")
@@ -378,9 +379,12 @@ async def yt(ctx:commands.Context):
         currentlyPlaying = True
         player = discord.FFmpegPCMAudio(song, **ffmpeg_options)
         voiceChannel.play(player, after=lambda f: setCurrentlyPlayingFalse())
-        if len(urlQueue) > 0:
+        while len(urlQueue) > 0:
             try:
-                await yt(urlQueue.popleft())
+                nextSong = urlQueue.popleft()
+                newPlayer = discord.FFmpegPCMAudio(nextSong["url"], **ffmpeg_options)
+                await ctx.send(f"Now playing: {nextSong["title"]}")
+                voiceChannel.play(newPlayer, after=lambda f: setCurrentlyPlayingFalse())
             except Exception as e:
                 return await ctx.send(f"Error while popping from url queue to continue. {e}")
     except Exception as e:
@@ -482,7 +486,7 @@ async def queue(ctx:commands.context):
         message += "None"
         return await ctx.send(message)
     for url in urlQueue:
-        message = message + "\n" + url
+        message = message + "\n" + url["title"]
     return await ctx.send(message)
 
 
