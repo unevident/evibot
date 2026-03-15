@@ -326,10 +326,12 @@ async def yt(ctx:commands.Context):
             if url[12:19] != "youtube":
                 if url[8:16] != "youtu.be":
                     return await ctx.send(f"Unable to recognize url as valid youtube link. {e}")
-            urlQueue.append(url)
+            
+            data = ytdl.extract_info(url, download=False)
+            urlQueue.append(data["url"])
             return await ctx.send(f"Adding song to queue.")
         except Exception as e:
-            return await ctx.send(f"Unable to parse song url.")
+            return await ctx.send(f"Unable to parse song url or ytdl error. {e}")
     
     try:
         if ctx.author.voice.channel == None:
@@ -442,8 +444,7 @@ async def ytstop(ctx:commands.context):
         syncVoiceChannelState()
         return await ctx.send("Stopped the currently playing song.")
     except Exception as e:
-        print(e)
-        return await ctx.send("Encountered an issue while trying to stop. Check bot logs.")
+        return await ctx.send(f"Encountered an issue while trying to stop. {e}")
     
 @bot.command()
 async def disconnect(ctx:commands.context):
